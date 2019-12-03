@@ -49,7 +49,7 @@ int main()
         }
 
         write(client_fd, response, sizeof(response) - 1); /*-1:'\0'*/
-        //close(client_fd);
+        close(client_fd);
     }
 }
 
