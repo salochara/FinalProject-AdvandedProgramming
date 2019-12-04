@@ -146,12 +146,8 @@ void waitForConnections(int server_fd){ //TODO
 
     // Get the size of the structure to store client information
     client_address_size = sizeof client_address;
-
-    // Create Threads for the pool
-    for (int i = 0; i < POOLSIZE; i++){
-            
-    }
     
+    // TODO create pool for
 
     while (!interrupted){
         while(!interrupted){ // While to keep polling
@@ -175,10 +171,6 @@ void waitForConnections(int server_fd){ //TODO
             }
         }
         if(!interrupted){
-            int *pcclient = dequeue();
-            if(pcclient != NULL){
-                attentionThread(pc)
-            }
             // Get the data from the client
             inet_ntop(client_address.sin_family, &client_address.sin_addr, client_presentation, sizeof client_presentation);
             printf("Received incomming connection from %s on port %d\n", client_presentation, client_address.sin_port);
