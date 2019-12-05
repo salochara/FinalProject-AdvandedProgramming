@@ -1,20 +1,23 @@
-# Makefile to compile a complex program composed of many libraries
-
 ### Variables for this project ###
 # These should be the only ones that need to be modified
 # The files that must be compiled, with a .o extension
-OBJECTS = FirstTest.o
+OBJECTS = post-mongoose.o mongoose.o
 # The header files
-#DEPENDS = vigenere.h
-# The executable program to be created
-MAIN = first_test
+DEPENDS = mongoose.h sockets.h
+# The executable programs to be created
+MONGOOSE = mongoose
+
+# Name of the project / zipfile
+MAIN = network_pi
 
 ### Variables for the compilation rules ###
 # These should work for most projects, but can be modified when necessary
 # The compiler program to use
 CC = gcc
 # Options to use when compiling object files
-CFLAGS = -Wall -g -std=c99 -pedantic # -O2
+# NOTE the use of gnu99, because otherwise the socket structures are not included
+#  http://stackoverflow.com/questions/12024703/why-cant-getaddrinfo-be-found-when-compiling-with-gcc-and-std-c99
+CFLAGS = -Wall -g -std=gnu99 -pedantic # -O2
 # Options to use for the final linking process
 # This one links the math library
 LDLIBS = -lm
@@ -27,10 +30,18 @@ LDLIBS = -lm
 #   $<  = The first required file of the rule
 
 # Default rule
-all: $(MAIN)
+all: $(MONGOOSE) $(SERVER) $(TEST)
 
-# Rule to make the executable
-$(MAIN): $(OBJECTS)
+# Rule to make the client program
+$(MONGOOSE): $(MONGOOSE).o $(OBJECTS)
+	$(CC) $^ -o $@ $(LDFLAGS) $(LDLIBS)
+
+# Rule to make the server program
+$(SERVER): $(SERVER).o $(OBJECTS)
+	$(CC) $^ -o $@ $(LDFLAGS) $(LDLIBS)
+
+# Rule to make the server program
+$(TEST): $(TEST).o $(OBJECTS)
 	$(CC) $^ -o $@ $(LDFLAGS) $(LDLIBS)
 
 # Rule to make the object files
@@ -39,7 +50,7 @@ $(MAIN): $(OBJECTS)
 
 # Clear the compiled files
 clean:
-	rm -rf *.o $(MAIN)
+	rm -rf *.o $(MONGOOSE) $(SERVER) $(TEST)
 
 # Create a zip with the source code of the project
 # Useful for submitting assignments
