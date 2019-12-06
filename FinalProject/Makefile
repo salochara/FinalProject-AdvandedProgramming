@@ -1,7 +1,7 @@
 ### Variables for this project ###
 # These should be the only ones that need to be modified
 # The files that must be compiled, with a .o extension
-OBJECTS = post-mongoose.o mongoose.o
+OBJECTS = post-mongoose.o
 # The header files
 DEPENDS = mongoose.h sockets.h
 # The executable programs to be created
@@ -17,7 +17,7 @@ CC = gcc
 # Options to use when compiling object files
 # NOTE the use of gnu99, because otherwise the socket structures are not included
 #  http://stackoverflow.com/questions/12024703/why-cant-getaddrinfo-be-found-when-compiling-with-gcc-and-std-c99
-CFLAGS = -Wall -g -std=gnu99 -pedantic # -O2
+CFLAGS = -Wall -g -std=gnu99 -pedantic -D MG_ENABLE_HTTP_STREAMING_MULTIPART # -O2
 # Options to use for the final linking process
 # This one links the math library
 LDLIBS = -lm
