@@ -5,7 +5,7 @@ OBJECTS = post-mongoose.o
 # The header files
 DEPENDS = mongoose.h sockets.h
 # The executable programs to be created
-MONGOOSE = mongoose
+MONGOOSE = post-mongoose
 
 # Name of the project / zipfile
 MAIN = network_pi

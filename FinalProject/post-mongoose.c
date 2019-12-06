@@ -2,6 +2,9 @@
 #include <string.h>
 #include "mongoose.h"
 
+
+
+
 // Struct containing settings for serving hTTP requests
 static struct mg_serve_http_opts s_http_server_opts;
 int initServer(int port);
@@ -18,6 +21,8 @@ struct mg_str cb(struct mg_connection *c, struct mg_str file_name) {
     printf("%s file name\n",file_name);
     return file_name;
 }
+
+
 
 static void handle_save(struct mg_connection *nc, struct http_message *hm) {
     // Get form variables and store settings values
@@ -45,18 +50,22 @@ void event_handler(struct mg_connection * nc, int event, void * p)
                 char result[100];
                 mg_get_http_var(&hm->body, "salo", result,
                                 100);
-                printf("in /save\n");
+                //printf("in /save\n");
                 //sleep(1);
                 printf("setting %s\n",result);
-                mg_http_send_redirect(nc, 302, mg_mk_str("/"), mg_mk_str(NULL));
+                mg_send_http_chunk(nc,result, sizeof(result));
+                //mg_http_send_redirect(nc, 302, mg_mk_str("/"), mg_mk_str(NULL));
 
             }
             // For index to show
             else{
-                printf("in index\n");
+                //printf("IN INDEX %s\n",hm->message.p); prints the whole message
                 mg_serve_http(nc,(struct http_message *)p,s_http_server_opts);
                 //printf("buffer %s\n",nc->recv_mbuf.buf);
             }
+            break;
+        case MG_EV_HTTP_REPLY:
+            printf("reply case\n");
             break;
         default:
             break;
