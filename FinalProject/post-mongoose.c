@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 #include "mongoose.h"
+#define FILE_NAME "differences.txt"
 
 #define BUFFER_SIZE 50
+#define SIZE_OF_ARRAY 30
 
 
 
@@ -19,7 +21,7 @@ int main()
 struct mg_str cb(struct mg_connection *c, struct mg_str file_name) {
     // Return the same filename. Do not actually do this except in test!
     // fname is user-controlled and needs to be sanitized.
-    printf("%s file name\n",file_name);
+    //printf("%s file name\n",file_name);
     return file_name;
 }
 
@@ -44,6 +46,35 @@ double computePI(char * buffer)
 }
 
 
+// Function that fills an array of size SIZE_OF_ARRAY and returns a pointer to the array created.
+int * fillArray()
+{
+    srand( (unsigned)time( NULL ) ); // for having a different seed for the random numbers.
+    int static array [SIZE_OF_ARRAY];
+    for (int i = 0; i < SIZE_OF_ARRAY; ++i) {
+        array[i] = rand() % 100 + 1; //random numbers from range [1,100]
+    }
+    return array;
+}
+
+// void function -> receives as a constant the number input by the user and the array filled with random numbers.
+// This function compares the inputNumber with each of the element of the array and prints the difference in a new file.
+void writeToFile(const int inputNumber,const int* array)
+{
+    int subtraction;
+    FILE * file_ptr = NULL; // A pointer to a file. Needed for handling files.
+    file_ptr = fopen("/Users/salo/Desktop/FinalProject-AdvandedProgramming/FinalProject/WebRoot/differences.txt", "w"); // TODO
+    if(file_ptr) // to verify if the file is open
+    {
+        for (int j = 0; j < SIZE_OF_ARRAY; ++j){
+            subtraction = inputNumber - array[j];
+            fprintf(file_ptr, "%d \n", subtraction);
+        }
+        fclose(file_ptr);
+        printf("File successfully called: \"%s\" \n", FILE_NAME);
+    }else
+        printf("File not created \n");
+}
 
 static void handle_save(struct mg_connection *nc, struct http_message *hm) {
     // Get form variables and store settings values
@@ -66,10 +97,17 @@ void event_handler(struct mg_connection * nc, int event, void * p)
             break;
         */
         case MG_EV_HTTP_REQUEST:
-            if (mg_vcmp(&hm->uri, "/save") == 0)
+            if (mg_vcmp(&hm->uri, "/pi-save") == 0)
             {
                 char buffer[BUFFER_SIZE];
 
+                /* First option for sending a response
+                sprintf(buffer, "conn_id sleep:%f", result);
+                mg_send_head(nc,200,strlen(buffer),"Content-Type: text/plain");
+                mg_printf(nc,"%s",buffer);
+                */
+
+                /* Second option for sending HTML */
                 // Get the amount of iterations to be done from the html form
                 mg_get_http_var(&hm->body, "iterations", buffer,sizeof(buffer));
 
@@ -85,8 +123,31 @@ void event_handler(struct mg_connection * nc, int event, void * p)
                 // Send empty chunk, the end of response
                 mg_send_http_chunk(nc, "", 0);
 
+            }else if(mg_vcmp(&hm->uri, "/array-save") == 0)
+            {
+                char buffer[BUFFER_SIZE];
+                int * array;
+                // Get the amount of iterations to be done from the html form
+                mg_get_http_var(&hm->body, "number", buffer,sizeof(buffer));
+                
+                // Cast what's passed into an int 
+                int value = atoi(buffer);
+
+                // Fill an array with random values
+                array = fillArray();
+                
+                // Calculate the difference with value - array[i]
+                writeToFile(value,array);
+
+                // Send the result numbers as a string
+
+                sprintf(buffer, "File created with name: \"%s\"", FILE_NAME);
+                mg_send_head(nc,200,strlen(buffer),"Content-Type: text/plain");
+                mg_printf(nc,"%s",buffer);
+
 
             }
+
             // For index to show
             else{
                 //printf("IN INDEX %s\n",hm->message.p); prints the whole message
