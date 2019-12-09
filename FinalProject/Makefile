@@ -1,14 +1,13 @@
 ### Variables for this project ###
 # These should be the only ones that need to be modified
 # The files that must be compiled, with a .o extension
-OBJECTS = post-mongoose.o
+OBJECTS = mongoose.o
 # The header files
-DEPENDS = mongoose.h sockets.h
+DEPENDS = mongoose.h
 # The executable programs to be created
 MONGOOSE = post-mongoose
 
-# Name of the project / zipfile
-MAIN = network_pi
+MAIN = web-server
 
 ### Variables for the compilation rules ###
 # These should work for most projects, but can be modified when necessary
@@ -30,19 +29,16 @@ LDLIBS = -lm
 #   $<  = The first required file of the rule
 
 # Default rule
-all: $(MONGOOSE) $(SERVER) $(TEST)
+all: $(MONGOOSE)
 
-# Rule to make the client program
+# Rule to make the mongoose program
 $(MONGOOSE): $(MONGOOSE).o $(OBJECTS)
 	$(CC) $^ -o $@ $(LDFLAGS) $(LDLIBS)
 
-# Rule to make the server program
-$(SERVER): $(SERVER).o $(OBJECTS)
-	$(CC) $^ -o $@ $(LDFLAGS) $(LDLIBS)
-
-# Rule to make the server program
-$(TEST): $(TEST).o $(OBJECTS)
-	$(CC) $^ -o $@ $(LDFLAGS) $(LDLIBS)
+# Specific rule to compile mongoose.c. It includes lots of warnings, we decided to ignore them.
+MONGOOSE_LIBRARY = -w
+mongoose.o: mongoose.c
+	$(CC) $(MONGOOSE_LIBRARY) -o $@ -c $<
 
 # Rule to make the object files
 %.o: %.c $(DEPENDS)
@@ -50,7 +46,7 @@ $(TEST): $(TEST).o $(OBJECTS)
 
 # Clear the compiled files
 clean:
-	rm -rf *.o $(MONGOOSE) $(SERVER) $(TEST)
+	rm -rf *.o $(MONGOOSE)
 
 # Create a zip with the source code of the project
 # Useful for submitting assignments
