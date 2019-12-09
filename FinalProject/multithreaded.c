@@ -255,6 +255,7 @@ static void ev_handler(struct mg_connection *nc, int event, void *ev_data) {
                 mg_get_http_var(&hm->body, "iterations", buffer,sizeof(buffer));
                 ompIterations = atoi(buffer);
                 // Redirect to omp
+
                 mg_http_send_redirect(nc, 302, mg_mk_str("/omp.html"), mg_mk_str(NULL));
             }else{
                 // For index to show

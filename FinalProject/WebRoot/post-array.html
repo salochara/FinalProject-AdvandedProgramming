@@ -2,14 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <title>Array</title>
 </head>
 <body>
-    <form method="POST" action="/array-save">
-        <input type="number" name="number">
+<div class="content">
+    <img src="tec-logo.png" style="float:right; height: 80px; border-radius: 3px;">
+    <h1>Welcome to the Array Magic Kingdom </h1>
+    <h4>Array Magic Kingdom:</h4>
+    <p>
+        1. Type in any number between 1-100
+        <br>
+        2. We dynamically allocate a 30-element-array with random numbers.
+        <br>
+        3. The input number is subtracted with each element in the recently created array.
+        <br>
+        4. A new file "differences.txt" is created with the results
+        <br>
+    </p>
+    <h3 style="margin-bottom: 0px;">Random number</h3>
+    <p style="margin-top: 1px;">Type in the number between [1-100]</p>
+
+    <form method="POST" action="/array-save" style="position: relative;right: -35%">
+        <input type="number" name="number" style="position:relative;right: -2%" required>
         <div>
             <button type="submit">Save Number</button>
         </div>
     </form>
+</div>
+
+
+
 </body>
 </html>

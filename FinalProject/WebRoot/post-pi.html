@@ -2,21 +2,29 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <title>PI Calculator</title>
 </head>
 <body>
-    <!-- For uploading a file   -->
-    <!--<form method="POST" action="/upload" enctype="multipart/form-data">
-        <input type="file" name="file">
-        <input type="submit" value="Upload">
-    </form>-->
+    <div class="content">
+        <img src="tec-logo.png" style="float:right; height: 80px; border-radius: 3px;">
+        <h1>Welcome to PI Calculator </h1>
+        <h4></h4>
+        <h3>
+            Approximation to PI using the following formula:
+            <br>
+            PI = 4 - (4/3) + (4/5) - (4/7) + (4/9) - ...
+        </h3>
+        <h3 style="margin-bottom: 0px;">Number of iterations</h3>
+        <p style="margin-top: 1px;">Type in the number of iterations to be executed</p>
+        <form method="POST" action="/pi-save" style="position: relative;right: -35%">
+            <input type="number" name="iterations" style="position:relative;right: -8%" required>
+            <div>
+                <button type="submit">Save Number of Iterations</button>
+            </div>
+        </form>
+    </div>
 
-    <form method="POST" action="/pi-save">
-        <input type="number" name="iterations">
-        <div>
-            <button type="submit">Save Number of Iterations</button>
-        </div>
-    </form>
 
 </body>
 </html>
