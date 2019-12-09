@@ -6,6 +6,7 @@
 //TODO check when nothing is put in pi iterations
 //TODO _t structs
 #include "mongoose.h"
+#include "game_of_life_omp.c"
 
 #define FILE_NAME "differences.txt"
 #define BUFFER_SIZE 100
@@ -46,7 +47,7 @@ typedef struct work_result {
 struct mg_str cb(struct mg_connection *c, struct mg_str file_name) {
     // Return the same filename. Do not actually do this except in test!
     // fname is user-controlled and needs to be sanitized.
-    //printf("%s file name\n",file_name);
+    printf("%s file name\n",file_name);
     return file_name;
 }
 
@@ -150,6 +151,10 @@ void *worker_thread(void *param) {
     // Initialize variables for array
     int * array;
 
+    pgm_t pgm_image;
+    char * input_file_name;
+    char output_file_name[MAX_STRING_SIZE];
+
     // Loops loking for a signal
     while (s_received_signal == 0) {
         // Read request information
@@ -181,6 +186,21 @@ void *worker_thread(void *param) {
 
                 break;
             case GAME_OF_LIFE:
+
+                res.input_number = req.input_number;
+
+
+
+                // Read the contents of a text file and store them in an image structure
+                readPGMFile("pulsar.pgm",&pgm_image);
+
+                strncpy(output_file_name,"pulsar.pgm", MAX_STRING_SIZE);
+                strip_ext(output_file_name);
+                // Call the iterations of Game Of Life to be applied and write the data in the image structure into a new PGM file
+                iterationsOfGameOfLife(&pgm_image, res.input_number, output_file_name, 0);
+
+                printf("nice case\n");
+
                 break;
             default:
                 break;
@@ -205,6 +225,23 @@ static void ev_handler(struct mg_connection *nc, int event, void *ev_data) {
     char buffer[BUFFER_SIZE];
 
     switch (event) {
+        case MG_EV_HTTP_PART_BEGIN:
+        case MG_EV_HTTP_PART_DATA:
+        case MG_EV_HTTP_PART_END:
+            mg_file_upload_handler(nc, event, ev_data, cb);
+            printf("hereee\n");
+
+            // Create a work request struct to send data to thread
+            struct work_request req = {(unsigned long)nc->user_data, GAME_OF_LIFE, 10};
+
+            // Send to the thread information
+            if (write(sock[0], &req, sizeof(req)) < 0){
+                perror("Writing worker sock");
+            }
+
+
+            mg_http_send_redirect(nc, 302, mg_mk_str("/"), mg_mk_str(NULL));
+            break;
         case MG_EV_ACCEPT:
             printf("Accept\n");
             nc->user_data = (void *)++s_next_id;
@@ -238,7 +275,8 @@ static void ev_handler(struct mg_connection *nc, int event, void *ev_data) {
                 if (write(sock[0], &req, sizeof(req)) < 0){
                     perror("Writing worker sock");
                 }
-            }else{
+            }
+            else{
                 // For index to show
                 mg_serve_http(nc,(struct http_message *)ev_data,s_http_server_opts);
             }
@@ -250,8 +288,13 @@ static void ev_handler(struct mg_connection *nc, int event, void *ev_data) {
         case MG_EV_CLOSE:
             if (nc->user_data){ nc->user_data = NULL;}
             break;
+            // For uploading files
+
+
+
         default:
             break;
+
     }
 }
 
