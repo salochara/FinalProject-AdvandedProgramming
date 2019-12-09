@@ -19,8 +19,8 @@ void allocateImage(image_t * image)
 {
     int i;
 
-    printf("\nGetting memory for the pixels\n");
-    printf("Size: %d x %d = %d\n", image->width, image->height, image->width * image->height);
+    // printf("\nGetting memory for the pixels\n");
+    // printf("Size: %d x %d = %d\n", image->width, image->height, image->width * image->height);
 
     // Allocate memory for the pointers to the rows
     image->pixels = (pixel_t **) malloc(image->height * sizeof (pixel_t *));
@@ -47,13 +47,13 @@ void allocateImage(image_t * image)
         image->pixels[i] = image->pixels[0] + image->width * i;
     }
 
-    printf("Done!\n");
+    // printf("Done!\n");
 }
 
 // Release the dynamic memory used by an image
 void freeImage(image_t * image)
 {
-    printf("\nReleasing the memory for the pixels\n");
+    // printf("\nReleasing the memory for the pixels\n");
 
     // Free the memory where the data is stored
     free( image->pixels[0] );
@@ -63,7 +63,7 @@ void freeImage(image_t * image)
     image->pixels = NULL;
     image->width = 0;
     image->height = 0;
-    printf("Done!\n");
+    // printf("Done!\n");
 }
 
 // Copy an image to another structure
@@ -84,7 +84,7 @@ void readPGMFile(const char * filename, pgm_t * pgm_image)
 {
     FILE * file_ptr = NULL;
 
-    printf("\nReading file: '%s'\n", filename);
+    // printf("\nReading file: '%s'\n", filename);
     // Open the file
     file_ptr = fopen(filename, "r");
     if (file_ptr == NULL)
@@ -116,7 +116,7 @@ void readPGMFile(const char * filename, pgm_t * pgm_image)
 
     // Close the file
     fclose(file_ptr);
-    printf("Done!\n");
+    // printf("Done!\n");
 }
 
 // Read the first lines of the file and store them in the correct fields in the structure

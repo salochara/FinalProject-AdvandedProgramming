@@ -5,7 +5,7 @@
 
 #include "game_of_life_omp.h"
 
-void iterationsOfGameOfLife(pgm_t *pgm_image, int iterations, char *output_file_name, int number_of_threads)
+void iterationsOfGameOfLife(pgm_t *pgm_image, int iterations, char *output_file_name)
 {
     char file[MAX_STRING_SIZE];
 
@@ -41,10 +41,6 @@ void iterationsOfGameOfLife(pgm_t *pgm_image, int iterations, char *output_file_
 
     // Free the allocated memory
     freeImage(&new_pgm_image.image);
-    printf("Freeing memory\n");
-
-    printf("%d iterations done\n",iterations);
-
 }
 // Function for changing the PGM image according to the Game of Life rules
 // The struct passed to the function depend on the iteration where the above function is at.

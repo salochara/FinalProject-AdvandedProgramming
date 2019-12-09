@@ -10,7 +10,7 @@
 #include "pgm_image.h"
 #define MAX_STRING_SIZE 50
 
-void iterationsOfGameOfLife(pgm_t *pgm_image, int iterations, char *output_file_name, int number_of_threads);
+void iterationsOfGameOfLife(pgm_t *pgm_image, int iterations, char *output_file_name);
 void changePGMImage(pgm_t * pgm_image, pgm_t * new_pgm_image);
 void strip_ext(char * file_name);
 

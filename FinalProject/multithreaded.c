@@ -20,6 +20,7 @@ static unsigned long s_next_id = 0;
 static struct mg_serve_http_opts s_http_server_opts;
 static sock_t sock[2];
 char file_name_globaL[MAX_STRING_SIZE];
+int ompIterations = 10;
 
 
 /////------ Structs ------
@@ -100,7 +101,6 @@ double computePI(int iterations){
 
 // Pushes the work to broadcast for the thread, only called when result is asked,
 static void result_thread(struct mg_connection *nc, int ev, void *ev_data) {
-    printf("result thread\n");
     (void) ev;
     char s[BUFFER_SIZE];
     struct mg_connection *c;
@@ -126,6 +126,9 @@ static void result_thread(struct mg_connection *nc, int ev, void *ev_data) {
                         mg_printf(c, "%s", s);
                         break;
                     case GAME_OF_LIFE:
+                        sprintf(s, "Conn_id:%lu  Iterations:%d   Files successfully created from %s", res->conn_id, res->input_number, file_name_globaL);
+                        mg_send_head(c, 200, strlen(s), "Content-Type: text/plain");
+                        mg_printf(c, "%s", s);
                         break;
                     default:
                         break;
@@ -138,7 +141,6 @@ static void result_thread(struct mg_connection *nc, int ev, void *ev_data) {
 
 // Prepares the thread and calls the result thread. This one is initialized since the inception of the thread
 void *worker_thread(void *param) {
-    printf("worker thread\n");
     struct mg_mgr *mgr = (struct mg_mgr *) param;
 
     // Initialize struct to store parameters sent from main thread
@@ -161,19 +163,18 @@ void *worker_thread(void *param) {
             perror("Reading worker sock");
         }
 
+        // Copy connection id, type and number to result struct
         res.conn_id = req.conn_id;
         res.type = req.type;
+        res.input_number = req.input_number;
 
         switch(req.type){
             case PI:
                 // Calculate pi and assign values to result struct
-                res.input_number = req.input_number;
                 res.result = computePI(req.input_number);
 
                 break;
             case  ARRAY:
-                // Get number
-                res.input_number = req.input_number;
 
                 // Fill an array with random values
                 array = fillArray();
@@ -185,9 +186,6 @@ void *worker_thread(void *param) {
 
                 break;
             case GAME_OF_LIFE:
-
-                res.input_number = req.input_number;
-
                 /* Does the Game Of Life code*/
                 // Read the contents of a text file and store them in an image structure
                 readPGMFile(file_name_globaL,&pgm_image);
@@ -195,15 +193,11 @@ void *worker_thread(void *param) {
                 strncpy(output_file_name,file_name_globaL, MAX_STRING_SIZE);
                 strip_ext(output_file_name);
                 // Call the iterations of Game Of Life to be applied and write the data in the image structure into a new PGM file
-                iterationsOfGameOfLife(&pgm_image, res.input_number, output_file_name, 0);
-
-
+                iterationsOfGameOfLife(&pgm_image, res.input_number, output_file_name);
                 break;
             default:
                 break;
         }
-
-        printf("broadcast\n");
         // Calls the result thread with the struct
         mg_broadcast(mgr, result_thread, (void *)&res, sizeof(res));
     }
@@ -215,47 +209,28 @@ void *worker_thread(void *param) {
 
 // Main orchestrator, this reads the type of event and specifies what to do with it
 static void ev_handler(struct mg_connection *nc, int event, void *ev_data) {
-    // TODO check these 2 declarations
-    (void) nc;
-    (void) ev_data;
-
     struct http_message *hm = (struct http_message *) ev_data;
     char buffer[BUFFER_SIZE];
-
     switch (event) {
         case MG_EV_HTTP_PART_BEGIN:
-            mg_get_http_var(&hm->body, "iterations", buffer,sizeof(buffer));
-
-            printf("Iterationsssssss %s\n",buffer);
         case MG_EV_HTTP_PART_DATA:
         case MG_EV_HTTP_PART_END:
             mg_file_upload_handler(nc, event, ev_data, cb);
-            printf("hereee\n");
-
-
             // Create a work request struct to send data to thread
-            struct work_request req = {(unsigned long)nc->user_data, GAME_OF_LIFE, 10};
+            struct work_request req = {(unsigned long)nc->user_data, GAME_OF_LIFE, ompIterations};
 
             // Send to the thread information
             if (write(sock[0], &req, sizeof(req)) < 0){
                 perror("Writing worker sock");
             }
-
-
-            mg_http_send_redirect(nc, 302, mg_mk_str("/"), mg_mk_str(NULL));
             break;
         case MG_EV_ACCEPT:
-            printf("Accept\n");
             nc->user_data = (void *)++s_next_id;
             break;
         case MG_EV_HTTP_REQUEST: {
-            printf("Request\n");
-
             if (mg_vcmp(&hm->uri, "/pi-save") == 0){ // Pi
                 // Get the amount of iterations to be done from the html form
                 mg_get_http_var(&hm->body, "iterations", buffer,sizeof(buffer));
-
-                printf("Iterations %s\n",buffer);
 
                 // Create a work request struct to send data to thread
                 struct work_request req = {(unsigned long)nc->user_data, PI,atoi(buffer)};
@@ -268,8 +243,6 @@ static void ev_handler(struct mg_connection *nc, int event, void *ev_data) {
                 // Get number to subtract from array, put in buffer
                 mg_get_http_var(&hm->body, "number", buffer,sizeof(buffer));
 
-                printf("Number %s\n",buffer);
-
                 // Create a work request struct to send data to thread
                 struct work_request req = {(unsigned long)nc->user_data, ARRAY,atoi(buffer)};
 
@@ -277,22 +250,22 @@ static void ev_handler(struct mg_connection *nc, int event, void *ev_data) {
                 if (write(sock[0], &req, sizeof(req)) < 0){
                     perror("Writing worker sock");
                 }
-            }
-            else{
+            }else if(mg_vcmp(&hm->uri, "/pre-omp") == 0) {
+                mg_get_http_var(&hm->body, "iterations", buffer,sizeof(buffer));
+                ompIterations = atoi(buffer);
+                printf("ss %d\n", ompIterations);
+                mg_http_send_redirect(nc, 302, mg_mk_str("/omp.html"), mg_mk_str(NULL));
+            }else{
                 // For index to show
                 mg_serve_http(nc,(struct http_message *)ev_data,s_http_server_opts);
             }
             break;
         }
         case MG_EV_HTTP_REPLY:
-            printf("reply case\n");
             break;
         case MG_EV_CLOSE:
             if (nc->user_data){ nc->user_data = NULL;}
             break;
-
-
-
         default:
             break;
 
@@ -331,7 +304,7 @@ int initServer(int port){
     s_http_server_opts.index_files = "yes";
     s_http_server_opts.document_root = "./WebRoot";// Serve current directory
 
-    // Create server
+    // Create server threads
     for (int i = 0; i < NUM_THREADS; i++) {
         mg_start_thread(worker_thread, &mgr);
     }
