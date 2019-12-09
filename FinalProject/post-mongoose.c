@@ -6,8 +6,6 @@
 #define BUFFER_SIZE 50
 #define SIZE_OF_ARRAY 30
 
-
-
 // Struct containing settings for serving hTTP requests
 static struct mg_serve_http_opts s_http_server_opts;
 int initServer(int port);
@@ -63,7 +61,7 @@ void writeToFile(const int inputNumber,const int* array)
 {
     int subtraction;
     FILE * file_ptr = NULL; // A pointer to a file. Needed for handling files.
-    file_ptr = fopen("/Users/salo/Desktop/FinalProject-AdvandedProgramming/FinalProject/WebRoot/differences.txt", "w"); // TODO
+    file_ptr = fopen("./WebRoot/differences.txt", "w"); // Open file in specified directory
     if(file_ptr) // to verify if the file is open
     {
         for (int j = 0; j < SIZE_OF_ARRAY; ++j){
@@ -165,8 +163,7 @@ void event_handler(struct mg_connection * nc, int event, void * p)
 }
 
 
-int initServer(int port)
-{
+int initServer(int port){
     char stringPort[10];
     sprintf(stringPort,"%d",port);
     printf("Listening on port: %s\n",stringPort);
@@ -185,10 +182,9 @@ int initServer(int port)
     mg_set_protocol_http_websocket(nc);
     s_http_server_opts.index_files = "yes";
     s_http_server_opts.document_root = "./WebRoot";
+    printf("while");
 
-
-    while(1)
-    {
+    while(1){
         mg_mgr_poll(&mgr,100);
     }
     mg_mgr_free(&mgr);
