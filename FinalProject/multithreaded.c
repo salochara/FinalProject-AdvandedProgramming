@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2014-2017 Cesanta Software Limited
- * All rights reserved
+ * Mongoose: Copyright (c) 2014-2017 Cesanta Software Limited
+ * Roberto Alejandro Gutiérrez Guillén		    A01019608
+ * Salomón Charabati Michan			            A01022425
+ * Alberto Ramos					            A01374020
  */
-
-//TODO check when nothing is put in pi iterations
-//TODO _t structs
 #include "mongoose.h"
-#include "game_of_life_omp.c"
+#include "game_of_life_omp.h"
 
 #define FILE_NAME "differences.txt"
 #define BUFFER_SIZE 100
@@ -19,7 +18,7 @@ static sig_atomic_t s_received_signal = 0;
 static unsigned long s_next_id = 0;
 static struct mg_serve_http_opts s_http_server_opts;
 static sock_t sock[2];
-char file_name_globaL[MAX_STRING_SIZE];
+char file_name_global[MAX_STRING_SIZE];
 int ompIterations = 10;
 
 
@@ -47,7 +46,7 @@ typedef struct work_result {
 
 // For uploading files. Need to compile with  -D MG_ENABLE_HTTP_STREAMING_MULTIPART
 struct mg_str cb(struct mg_connection *c, struct mg_str file_name) {
-    strncpy(file_name_globaL,file_name.p,MAX_STRING_SIZE);
+    strncpy(file_name_global,file_name.p,MAX_STRING_SIZE);
     return file_name;
 }
 
@@ -88,8 +87,7 @@ double computePI(int iterations){
     int sign = -1;
     unsigned long int divisor = 3;
 
-    for (int i = 0; i < iterations; ++i)
-    {
+    for (int i = 0; i < iterations; ++i){
         result += sign * (4.0 / divisor);
         sign *= -1;
         divisor += 2;
@@ -105,6 +103,7 @@ static void result_thread(struct mg_connection *nc, int ev, void *ev_data) {
     char s[BUFFER_SIZE];
     struct mg_connection *c;
 
+    // Cycle through out all incoming connection requests
     for (c = mg_next(nc->mgr, NULL); c != NULL; c = mg_next(nc->mgr, c)) {
         if (c->user_data != NULL) {
             // Put the received parameters in work result struct 
@@ -115,7 +114,7 @@ static void result_thread(struct mg_connection *nc, int ev, void *ev_data) {
                 // Switch case for different programs
                 switch(res->type){
                     case PI:
-                        // Write result
+                        // Write result on a new page
                         sprintf(s, "conn_id:%lu Iterations:%d pi:%f", res->conn_id, res->input_number, res->result);
                         mg_send_head(c, 200, strlen(s), "Content-Type: text/plain");
                         mg_printf(c, "%s", s);
@@ -125,8 +124,8 @@ static void result_thread(struct mg_connection *nc, int ev, void *ev_data) {
                         mg_send_head(c, 200, strlen(s), "Content-Type: text/plain");
                         mg_printf(c, "%s", s);
                         break;
-                    case GAME_OF_LIFE:
-                        sprintf(s, "Conn_id:%lu  Iterations:%d   Files successfully created from %s", res->conn_id, res->input_number, file_name_globaL);
+                    case GAME_OF_LIFE: // Redirect with results to a new page
+                        sprintf(s, "Conn_id:%lu  Iterations:%d   Files successfully created from %s", res->conn_id, res->input_number, file_name_global);
                         mg_send_head(c, 200, strlen(s), "Content-Type: text/plain");
                         mg_printf(c, "%s", s);
                         break;
@@ -188,9 +187,9 @@ void *worker_thread(void *param) {
             case GAME_OF_LIFE:
                 /* Does the Game Of Life code*/
                 // Read the contents of a text file and store them in an image structure
-                readPGMFile(file_name_globaL,&pgm_image);
+                readPGMFile(file_name_global,&pgm_image);
 
-                strncpy(output_file_name,file_name_globaL, MAX_STRING_SIZE);
+                strncpy(output_file_name,file_name_global, MAX_STRING_SIZE);
                 strip_ext(output_file_name);
                 // Call the iterations of Game Of Life to be applied and write the data in the image structure into a new PGM file
                 iterationsOfGameOfLife(&pgm_image, res.input_number, output_file_name);
@@ -204,13 +203,15 @@ void *worker_thread(void *param) {
     return NULL;
 }
 
-
 /////------ Server functions------
-
 // Main orchestrator, this reads the type of event and specifies what to do with it
 static void ev_handler(struct mg_connection *nc, int event, void *ev_data) {
+    // Declare message to see where browser is being redirected
     struct http_message *hm = (struct http_message *) ev_data;
+    // Declare buffer t
     char buffer[BUFFER_SIZE];
+
+    // Main switch to decide what to do, where to redirect
     switch (event) {
         case MG_EV_HTTP_PART_BEGIN:
         case MG_EV_HTTP_PART_DATA:
@@ -253,6 +254,8 @@ static void ev_handler(struct mg_connection *nc, int event, void *ev_data) {
             }else if(mg_vcmp(&hm->uri, "/pre-omp") == 0) {
                 mg_get_http_var(&hm->body, "iterations", buffer,sizeof(buffer));
                 ompIterations = atoi(buffer);
+                // Redirect to omp
+
                 mg_http_send_redirect(nc, 302, mg_mk_str("/omp.html"), mg_mk_str(NULL));
             }else{
                 // For index to show
@@ -260,14 +263,11 @@ static void ev_handler(struct mg_connection *nc, int event, void *ev_data) {
             }
             break;
         }
-        case MG_EV_HTTP_REPLY:
-            break;
         case MG_EV_CLOSE:
             if (nc->user_data){ nc->user_data = NULL;}
             break;
         default:
             break;
-
     }
 }
 
@@ -277,7 +277,7 @@ int initServer(int port){
     // Mongoose connection
     struct mg_connection *nc;
 
-
+    // Open sockets
     if (mg_socketpair(sock, SOCK_STREAM) == 0) {
         perror("Opening socket pair");
         exit(1);
