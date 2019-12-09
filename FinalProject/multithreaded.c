@@ -46,19 +46,9 @@ typedef struct work_result {
 
 // For uploading files. Need to compile with  -D MG_ENABLE_HTTP_STREAMING_MULTIPART
 struct mg_str cb(struct mg_connection *c, struct mg_str file_name) {
-    // Return the same filename. Do not actually do this except in test!
-    // fname is user-controlled and needs to be sanitized.
-    printf("%s file name\n",file_name);
     strncpy(file_name_globaL,file_name.p,MAX_STRING_SIZE);
     return file_name;
 }
-
-int omp_iterations(struct mg_connection *c, int omp_iterations) {
-    // Return the same filename. Do not actually do this except in test!
-    // fname is user-controlled and needs to be sanitized.
-    return omp_iterations;
-}
-
 
 /////------ Functions for applications ------
 
