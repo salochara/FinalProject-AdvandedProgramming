@@ -6,7 +6,7 @@
 //TODO check when nothing is put in pi iterations
 //TODO _t structs
 #include "mongoose.h"
-#include "game_of_life_omp.c"
+#include "game_of_life_omp.h"
 
 #define FILE_NAME "differences.txt"
 #define BUFFER_SIZE 100
@@ -19,6 +19,7 @@ static sig_atomic_t s_received_signal = 0;
 static unsigned long s_next_id = 0;
 static struct mg_serve_http_opts s_http_server_opts;
 static sock_t sock[2];
+char file_name_global[MAX_STRING_SIZE];
 
 
 /////------ Structs ------
@@ -47,7 +48,8 @@ typedef struct work_result {
 struct mg_str cb(struct mg_connection *c, struct mg_str file_name) {
     // Return the same filename. Do not actually do this except in test!
     // fname is user-controlled and needs to be sanitized.
-    printf("%s file name\n",file_name);
+    strncpy(file_name_global,file_name.p,MAX_STRING_SIZE);
+    printf("file name is: %s\n",file_name_global);
     return file_name;
 }
 
@@ -189,8 +191,6 @@ void *worker_thread(void *param) {
 
                 res.input_number = req.input_number;
 
-
-
                 // Read the contents of a text file and store them in an image structure
                 readPGMFile("pulsar.pgm",&pgm_image);
 
@@ -220,7 +220,6 @@ static void ev_handler(struct mg_connection *nc, int event, void *ev_data) {
     // TODO check these 2 declarations
     (void) nc;
     (void) ev_data;
-
     struct http_message *hm = (struct http_message *) ev_data;
     char buffer[BUFFER_SIZE];
 
@@ -228,11 +227,12 @@ static void ev_handler(struct mg_connection *nc, int event, void *ev_data) {
         case MG_EV_HTTP_PART_BEGIN:
         case MG_EV_HTTP_PART_DATA:
         case MG_EV_HTTP_PART_END:
-            mg_file_upload_handler(nc, event, ev_data, cb);
-            printf("hereee\n");
+            mg_file_upload_handler(nc, event, ev_data, cb); // mg_file_upload_handler(nc, ev, ev_data, upload_fname);
+
+
 
             // Create a work request struct to send data to thread
-            struct work_request req = {(unsigned long)nc->user_data, GAME_OF_LIFE, 10};
+            struct work_request req = {(unsigned long)nc->user_data, GAME_OF_LIFE,atoi(file_name_global)};
 
             // Send to the thread information
             if (write(sock[0], &req, sizeof(req)) < 0){
