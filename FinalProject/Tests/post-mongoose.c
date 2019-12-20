@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "mongoose.h"
+#include "../mongoose.h"
 #define FILE_NAME "differences.txt"
 
 #define BUFFER_SIZE 50
@@ -182,7 +182,7 @@ int initServer(int port){
     mg_set_protocol_http_websocket(nc);
     s_http_server_opts.index_files = "yes";
     s_http_server_opts.document_root = "./WebRoot";
-    printf("while");
+    printf("while"); //todo
 
     while(1){
         mg_mgr_poll(&mgr,100);

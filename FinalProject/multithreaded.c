@@ -152,7 +152,6 @@ void *worker_thread(void *param) {
     int * array;
 
     pgm_t pgm_image;
-    char * input_file_name;
     char output_file_name[MAX_STRING_SIZE];
 
     // Loops loking for a signal

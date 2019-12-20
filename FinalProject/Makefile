@@ -1,13 +1,12 @@
 ### Variables for this project ###
 # These should be the only ones that need to be modified
 # The files that must be compiled, with a .o extension
-OBJECTS = mongoose.o
+OBJECTS = mongoose.o multithreaded.o string_functions.o pgm_image.o game_of_life_omp.o
 # The header files
-DEPENDS = mongoose.h
+DEPENDS = mongoose.h pgm_image.h string_functions.h
 # The executable programs to be created
 MONGOOSE = multithreaded
 
-MAIN = web-server
 
 ### Variables for the compilation rules ###
 # These should work for most projects, but can be modified when necessary
@@ -16,10 +15,10 @@ CC = gcc
 # Options to use when compiling object files
 # NOTE the use of gnu99, because otherwise the socket structures are not included
 #  http://stackoverflow.com/questions/12024703/why-cant-getaddrinfo-be-found-when-compiling-with-gcc-and-std-c99
-CFLAGS = -Wall -g -std=gnu99 -pedantic -D MG_ENABLE_HTTP_STREAMING_MULTIPART -D MG_ENABLE_THREADS # -O2
+CFLAGS = -Wall -g -std=gnu99  -D MG_ENABLE_HTTP_STREAMING_MULTIPART -D MG_ENABLE_THREADS # -O2
 # Options to use for the final linking process
 # This one links the math library
-LDLIBS = -lm
+LDLIBS = -D MG_ENABLE_HTTP_STREAMING_MULTIPART -D MG_ENABLE_THREADS
 
 ### The rules ###
 # These should work for most projects without change
@@ -34,11 +33,6 @@ all: $(MONGOOSE)
 # Rule to make the mongoose program
 $(MONGOOSE): $(MONGOOSE).o $(OBJECTS)
 	$(CC) $^ -o $@ $(LDFLAGS) $(LDLIBS)
-
-# Specific rule to compile mongoose.c. It includes lots of warnings, we decided to ignore them.
-MONGOOSE_LIBRARY = -w
-mongoose.o: mongoose.c
-	$(CC) $(MONGOOSE_LIBRARY) -o $@ -c $<
 
 # Rule to make the object files
 %.o: %.c $(DEPENDS)
